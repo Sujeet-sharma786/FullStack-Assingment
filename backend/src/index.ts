@@ -32,7 +32,9 @@ const server = new ApolloServer({
 
 async function start() {
   await server.start();
+  // @ts-expect-error
   server.applyMiddleware({ app, path: '/graphql' });
+
   httpServer.listen(4000, () => {
     console.log('Server running on http://localhost:4000/graphql');
   });
