@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Event" ALTER COLUMN "location" DROP DEFAULT,
+ALTER COLUMN "startTime" DROP DEFAULT;
