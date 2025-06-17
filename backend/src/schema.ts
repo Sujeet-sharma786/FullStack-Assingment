@@ -28,13 +28,28 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    events: async (_: any, __: any, context: any) => {
-      const { prisma } = context;
-      return prisma.event.findMany({ include: { attendees: true } });
+    events: async (_parent: any, _args: any, context: any) => {
+      const events = await context.prisma.event.findMany({ include: { attendees: true } });
+      return events.map((event: any) => ({
+        ...event,
+        startTime: typeof event.startTime === 'number'
+          ? new Date(event.startTime).toISOString()
+          : event.startTime instanceof Date
+            ? event.startTime.toISOString()
+            : event.startTime,
+      }));
     },
-    event: async (_: any, { id }: any, context: any) => {
-      const { prisma } = context;
-      return prisma.event.findUnique({ where: { id }, include: { attendees: true } });
+    event: async (_parent: any, { id }: any, context: any) => {
+      const event = await context.prisma.event.findUnique({ where: { id }, include: { attendees: true } });
+      if (!event) return null;
+      return {
+        ...event,
+        startTime: typeof event.startTime === 'number'
+          ? new Date(event.startTime).toISOString()
+          : event.startTime instanceof Date
+            ? event.startTime.toISOString()
+            : event.startTime,
+      };
     },
     me: async (_: any, __: any, context: any) => {
       return { id: '1', name: 'Test User', email: 'test@example.com' };

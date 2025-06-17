@@ -29,13 +29,29 @@ exports.typeDefs = (0, apollo_server_express_1.gql) `
 `;
 exports.resolvers = {
     Query: {
-        events: async (_, __, context) => {
-            const { prisma } = context;
-            return prisma.event.findMany({ include: { attendees: true } });
+        events: async (_parent, _args, context) => {
+            const events = await context.prisma.event.findMany({ include: { attendees: true } });
+            return events.map((event) => ({
+                ...event,
+                startTime: typeof event.startTime === 'number'
+                    ? new Date(event.startTime).toISOString()
+                    : event.startTime instanceof Date
+                        ? event.startTime.toISOString()
+                        : event.startTime,
+            }));
         },
-        event: async (_, { id }, context) => {
-            const { prisma } = context;
-            return prisma.event.findUnique({ where: { id }, include: { attendees: true } });
+        event: async (_parent, { id }, context) => {
+            const event = await context.prisma.event.findUnique({ where: { id }, include: { attendees: true } });
+            if (!event)
+                return null;
+            return {
+                ...event,
+                startTime: typeof event.startTime === 'number'
+                    ? new Date(event.startTime).toISOString()
+                    : event.startTime instanceof Date
+                        ? event.startTime.toISOString()
+                        : event.startTime,
+            };
         },
         me: async (_, __, context) => {
             return { id: '1', name: 'Test User', email: 'test@example.com' };

@@ -26,24 +26,27 @@ export default function EventListScreen() {
       <FlatList
         data={data || []}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            activeOpacity={0.85}
-            onPress={() => router.push({ pathname: '/events/[id]', params: { id: item.id } })}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.eventName}>{item.name}</Text>
-              <Text style={styles.eventDate}>
-                {new Date(item.startTime).toLocaleString()}
+        renderItem={({ item }) => {
+          console.log('startTime:', item.startTime);
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.85}
+              onPress={() => router.push({ pathname: '/events/[id]', params: { id: item.id } })}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.eventName}>{item.name}</Text>
+                <Text style={styles.eventDate}>
+                  {new Date(item.startTime).toLocaleString()}
+                </Text>
+              </View>
+              <Text style={styles.eventLocation}>{item.location}</Text>
+              <Text style={styles.attendeeCount}>
+                {item.attendees.length} Attendee{item.attendees.length !== 1 ? 's' : ''}
               </Text>
-            </View>
-            <Text style={styles.eventLocation}>{item.location}</Text>
-            <Text style={styles.attendeeCount}>
-              {item.attendees.length} Attendee{item.attendees.length !== 1 ? 's' : ''}
-            </Text>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
         ListEmptyComponent={
           <Text style={styles.emptyText}>No events found.</Text>
         }
