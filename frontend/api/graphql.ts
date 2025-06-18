@@ -62,3 +62,23 @@ export async function joinEvent(eventId: string, user: { name: string; email: st
   const data = await request(ENDPOINT, mutation, { eventId, ...user });
   return data.joinEvent;
 }
+
+export async function leaveEvent(eventId: string,user:{name: string; email :string}){
+  const mutation = gql`
+    mutation ($eventId: ID!, $name: String!, $email: String!) {
+      leaveEvent(eventId: $eventId, name: $name, email: $email) {
+        id
+        name
+        location
+        startTime
+        attendees {
+          id
+          name
+          email
+        }
+      }
+    }
+  `;
+  const data = await request(ENDPOINT, mutation, { eventId, ...user });
+  return data.leaveEvent;
+}

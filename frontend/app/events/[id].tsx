@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, Button, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEventById, joinEvent } from '../../api/graphql';
-import { useSocket } from '../../api/socket';
+import { getEventById, joinEvent, leaveEvent } from '../../api/graphql';
 import { useAuthStore } from '../../store/auth';
+import { useSocket } from '../../api/socket'; // ✅ Import useSocket
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -17,25 +17,36 @@ export default function EventDetailScreen() {
     enabled: !!id,
   });
 
-  const mutation = useMutation({
+  const joinMutation = useMutation({
     mutationFn: () => joinEvent(id, user),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
   });
 
+  const leaveMutation = useMutation({
+    mutationFn: () => leaveEvent(id, user),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['event', id] }),
+  });
+
+  // ✅ Use socket to listen for real-time updates
   useSocket(id, () => {
     queryClient.invalidateQueries({ queryKey: ['event', id] });
   });
 
-  if (isLoading) return (
-    <View style={styles.centered}>
-      <Text style={styles.loadingText}>Loading event...</Text>
-    </View>
-  );
-  if (!data) return (
-    <View style={styles.centered}>
-      <Text style={styles.errorText}>Event not found.</Text>
-    </View>
-  );
+  if (isLoading) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.loadingText}>Loading event...</Text>
+      </View>
+    );
+  }
+
+  if (!data) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Event not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -44,16 +55,32 @@ export default function EventDetailScreen() {
       <Text style={styles.eventDate}>
         {new Date(data.startTime).toLocaleString()}
       </Text>
-      <TouchableOpacity
-        style={styles.joinButton}
-        onPress={() => mutation.mutate()}
-        activeOpacity={0.85}
-      >
-        <Text style={styles.joinButtonText}>Join Event</Text>
-      </TouchableOpacity>
+
+      <View style={styles.buttonRow}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => joinMutation.mutate()}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.buttonText}>
+            {joinMutation.isLoading ? 'Joining...' : 'Join Event'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => leaveMutation.mutate()}
+          disabled={leaveMutation.isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {leaveMutation.isLoading ? 'Leaving...' : 'Leave Event'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.attendeesHeader}>
         Attendees ({data.attendees.length})
       </Text>
+
       <FlatList
         data={data.attendees}
         keyExtractor={item => item.id}
@@ -84,7 +111,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#f6f8fa',
-    marginTop: 40, // <-- Add this line to push content down
+    marginTop: 40,
   },
   eventName: {
     fontSize: 26,
@@ -105,21 +132,22 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     textAlign: 'center',
   },
-  joinButton: {
-    backgroundColor: '#3a5a40',
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 22,
-    alignItems: 'center',
-    alignSelf: 'center',
-    width: '60%',
-    elevation: 2,
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 16,
   },
-  joinButtonText: {
+  actionButton: {
+    backgroundColor: '#3a5a40',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    marginHorizontal: 8,
+  },
+  buttonText: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: 1,
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   attendeesHeader: {
     fontSize: 20,

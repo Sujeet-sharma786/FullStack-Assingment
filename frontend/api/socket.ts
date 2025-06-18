@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 
-const ENDPOINT = 'http://192.168.110.75:4000';
-const socket = io(ENDPOINT);
+// Use your backend URL here (local IP or Render URL)
+export const socket = io('http://192.168.110.75:4000'); // or your Render URL
 
 export function useSocket(eventId: string, onUpdate: () => void) {
   useEffect(() => {
